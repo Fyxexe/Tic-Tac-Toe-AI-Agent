@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tic Tac Toe AI</title>
+<style>
+body { font-family: Arial; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f8ff; }
+#board { display: grid; grid-template-columns: repeat(3, 100px); gap: 5px; }
+.cell { width: 100px; height: 100px; display: flex; justify-content: center; align-items: center; font-size: 2em; cursor: pointer; background: #cce7ff; }
+.cell:hover { background: #99d1ff; }
+#status { margin-top: 20px; font-size: 1.2em; }
+</style>
+</head>
+<body>
+
+<div>
+  <div id="board"></div>
+  <div id="status"></div>
+</div>
+
+<script>
+let board = [['1','2','3'],['4','5','6'],['7','8','9']];
+const ai_player = 'X';
+const man_player = 'O';
+let currentPlayer = man_player;
+
+function printBoard() {
+  const boardDiv = document.getElementById('board');
+  boardDiv.innerHTML = '';
+  for (let i = 0; i < 3; i++) {
+    for (let j = 0; j < 3; j++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.textContent = board[i][j] === ai_player || board[i][j] === man_player ? board[i][j] : '';
+      cell.dataset.row = i;
+      cell.dataset.col = j;
+      cell.addEventListener('click', () => playerMove(i, j));
+      boardDiv.appendChild(cell);
+    }
+  }
+}
+
+function playerMove(row, col) {
+  if (board[row][col] === ai_player || board[row][col] === man_player) return;
+  if (currentPlayer === man_player) {
+    board[row][col] = man_player;
+    printBoard();
+    if (checkWin(board, man_player)) return endGame('You won!');
+    if (isDraw(board)) return endGame('Draw!');
+    currentPlayer = ai_player;
+    setTimeout(aiMove, 200);
+  }
+}
+
+function aiMove() {
+  let bestScore = -Infinity;
+  let move;
+  for (let i = 0; i < 3; i++) {
+    for (let j = 0; j < 3; j++) {
+      if (board[i][j] !== ai_player && board[i][j] !== man_player) {
+        let backup = board[i][j];
+        board[i][j] = ai_player;
+        let score = minimax(board, 0, false);
+        board[i][j] = backup;
+        if (score > bestScore) {
+          bestScore = score;
+          move = {i, j};
+        }
+      }
+    }
+  }
+  board[move.i][move.j] = ai_player;
+  printBoard();
+  if (checkWin(board, ai_player)) return endGame('AI won!');
+  if (isDraw(board)) return endGame('Draw!');
+  currentPlayer = man_player;
+}
+
+function minimax(board, depth, isMaximizing) {
+  if (checkWin(board, ai_player)) return 1;
+  if (checkWin(board, man_player)) return -1;
+  if (isDraw(board)) return 0;
+  if (isMaximizing) {
+    let bestScore = -Infinity;
+    for (let i = 0; i < 3; i++) {
+      for (let j = 0; j < 3; j++) {
+        if (board[i][j] !== ai_player && board[i][j] !== man_player) {
+          let backup = board[i][j];
+          board[i][j] = ai_player;
+          let score = minimax(board, depth+1, false);
+          board[i][j] = backup;
+          bestScore = Math.max(score, bestScore);
+        }
+      }
+    }
+    return bestScore;
+  } else {
+    let bestScore = Infinity;
+    for (let i = 0; i < 3; i++) {
+      for (let j = 0; j < 3; j++) {
+        if (board[i][j] !== ai_player && board[i][j] !== man_player) {
+          let backup = board[i][j];
+          board[i][j] = man_player;
+          let score = minimax(board, depth+1, true);
+          board[i][j] = backup;
+          bestScore = Math.min(score, bestScore);
+        }
+      }
+    }
+    return bestScore;
+  }
+}
+
+function checkWin(b, player) {
+  for (let i=0;i<3;i++) if (b[i][0]===player && b[i][1]===player && b[i][2]===player) return true;
+  for (let i=0;i<3;i++) if (b[0][i]===player && b[1][i]===player && b[2][i]===player) return true;
+  if (b[0][0]===player && b[1][1]===player && b[2][2]===player) return true;
+  if (b[0][2]===player && b[1][1]===player && b[2][0]===player) return true;
+  return false;
+}
+
+function isDraw(b) {
+  return b.flat().every(cell => cell === ai_player || cell === man_player);
+}
+
+function endGame(msg) {
+  document.getElementById('status').textContent = msg;
+  board = [['','',''],['','',''],['','','']];
+  currentPlayer = man_player;
+  setTimeout(() => {printBoard(); document.getElementById('status').textContent='';}, 2000);
+}
+
+printBoard();
+</script>
+
+</body>
+</html>
